@@ -1,1 +1,1 @@
-"# rtl-sobel-filter" 
+# rtl-sobel-filter 
