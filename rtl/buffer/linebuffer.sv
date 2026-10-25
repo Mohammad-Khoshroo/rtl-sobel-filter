@@ -38,24 +38,14 @@ module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
     
     always_comb begin : READ_DATA
 
-        if(rst) begin
+        READ_UNKNOWN: assert #0 (!$isunknown(raddress))
+            else $warning("Read address or row contains X or Z bits!");
         
-            for (int r = 0; r < ROWS; r++) begin
-            rdata[r] = '0;
-            end
+        READ_ADDRESS_RANGE: assert #0 (int'(raddress) < SIZE)
+            else $error("Window horizontal range exceeds SIZE!");   
         
-        end else begin
-            
-            READ_UNKNOWN: assert #0 (!$isunknown(raddress))
-                else $warning("Read address or row contains X or Z bits!");
-            
-            READ_ADDRESS_RANGE: assert #0 (int'(raddress) < SIZE)
-                else $error("Window horizontal range exceeds SIZE!");   
-            
-            for (int r = 0; r < ROWS; r++) begin
-            rdata[r] = mem[r][raddress];
-            end
-        
+        for (int r = 0; r < ROWS; r++) begin
+        rdata[r] = mem[r][raddress];
         end
         
     end
