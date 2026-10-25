@@ -1,4 +1,4 @@
-module LineBuffer #(WIDTH = 8, ROWS = 3, SIZE = 640) (
+module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
     input clk, rst, 
 
     input [WIDTH-1:0] wdata,
@@ -8,14 +8,15 @@ module LineBuffer #(WIDTH = 8, ROWS = 3, SIZE = 640) (
     
     input [$clog2(SIZE)-1:0]  raddress,
     output logic [WIDTH-1:0] rdata [ROWS-1:0]
-
 );
 
-    
     reg [WIDTH-1:0]  mem [ROWS-1:0][SIZE-1:0];
 
     always @(posedge clk) begin : WRITE_DATA
         
+        RST_UNKNOWN: assert #0 (!$isunknown(rst))
+            else $error("Reset signal (rst) is X or Z!");
+
         if (!rst) begin
             
             EN_UNKNOWN: assert (!$isunknown(wenable))
