@@ -1,3 +1,20 @@
+// =============================================================================
+// LineBuffer #(
+//     .WIDTH    (8),
+//     .ROWS     (3),
+//     .SIZE     (640)
+// ) module_name (
+//     .clk      (clk),
+//     .rst      (rst),
+//     .wdata    (wdata),
+//     .wenable  (wenable),
+//     .wrow     (wrow),
+//     .waddress (waddress),
+//     .raddress (raddress),
+//     .rdata    (rdata)
+// );
+// =============================================================================
+
 module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
     input clk, rst, 
 

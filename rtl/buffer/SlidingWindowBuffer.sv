@@ -2,6 +2,27 @@
 `include "ReorderBuffer.sv"
 `include "WindowBuffer.sv"
 
+// =============================================================================
+// SlidingWindowBuffer #(
+//     .WIDTH    (8),
+//     .ROWS     (3),
+//     .SIZE     (640),
+//     .XWIN     (3),
+//     .YWIN     (3)
+// ) module_name (
+//     .clk      (clk),
+//     .rst      (rst),
+//     .wenable  (wenable),
+//     .wdata    (wdata),
+//     .wrow     (wrow),
+//     .waddress (waddress),
+//     .renable  (renable),
+//     .rrow     (rrow),       // Pointer to top row for circular alignment
+//     .raddress (raddress),
+//     .rdata    (rdata)
+// );
+// =============================================================================
+
 module SlidingWindowBuffer #( parameter WIDTH = 8, ROWS  = 3, SIZE  = 640, XWIN  = 3, YWIN  = 3 ) (
     input  clk, rst,
 

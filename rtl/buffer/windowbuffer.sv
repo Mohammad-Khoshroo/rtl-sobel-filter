@@ -1,3 +1,17 @@
+// =============================================================================
+// WindowBuffer #(
+//     .WIDTH      (8),
+//     .XWIN       (3),
+//     .YWIN       (3)
+// ) module_name (
+//     .clk        (clk),
+//     .rst        (rst),
+//     .shift_en   (shift_en),
+//     .col_in     (col_in),
+//     .window_out (window_out)
+// );
+// =============================================================================
+
 module WindowBuffer #( parameter WIDTH = 8, XWIN  = 3, YWIN  = 3 ) (
     input  logic clk, rst,
     input  logic shift_en,
