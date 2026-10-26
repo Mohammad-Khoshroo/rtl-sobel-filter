@@ -1,3 +1,6 @@
+`ifndef CSA_SV
+`define CSA_SV
+
 // =============================================================================
 // CSA #(
 //     .WIDTH (12)
@@ -29,3 +32,5 @@ module CSA #( parameter WIDTH = 12 ) (
     assign carry = {cout[WIDTH-2:0], cin};
 
 endmodule
+
+`endif
