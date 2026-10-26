@@ -1,13 +1,5 @@
-`ifndef CSA_SV
-`include "../MIA/CSA.sv"
-`endif
-
-`ifndef REGISTER_MODULE
-`include "../Register/Register.sv"
-`endif
-
 // =============================================================================
-// Core_Sobel module_name (
+// core module_name (
 //     .clk     (clk),
 //     .rst     (rst),
 //     .window  (window),
@@ -16,13 +8,11 @@
 //     .gy_en   (gy_en),
 //     .xm_ctrl (xm_ctrl),
 //     .ym_ctrl (ym_ctrl),
-//     .G       (G),
-//     .Gx_out  (Gx_out),
-//     .Gy_out  (Gy_out)
+//     .G       (G)
 // );
 // =============================================================================
 
-module Core_Sobel (
+module core (
     input clk, rst,
     input [7:0] window [2:0][2:0],
 
@@ -32,9 +22,7 @@ module Core_Sobel (
     input xm_ctrl,
     input ym_ctrl,
 
-    output logic [7:0] G,
-    output logic signed [10:0] Gx_out,
-    output logic signed [10:0] Gy_out
+    output logic [7:0] G
 );
 
     wire [10:0] ordered_window [5:0];
@@ -115,20 +103,13 @@ module Core_Sobel (
         .q         (reg_Gy)
     );
 
-    assign Gx_out = reg_Gx;
-    assign Gy_out = reg_Gy;
-
-    wire [10:0] inv_Gx = ~reg_Gx;
-    wire [10:0] inv_Gy = ~reg_Gy;
-
     logic [10:0] xm_out, ym_out;
-    assign xm_out = xm_ctrl ? inv_Gx : s_csa4;
-    assign ym_out = ym_ctrl ? inv_Gy : c_csa4;
+    assign xm_out = xm_ctrl ? ~reg_Gx : s_csa4;
+    assign ym_out = ym_ctrl ? ~reg_Gy : c_csa4;
 
-    wire cin_sel   = reg_Gx[10] | reg_Gy[10];
-    wire adder_cin = (xm_ctrl || ym_ctrl) ? cin_sel : 1'b0;
+    wire adder_cin = reg_Gx[10] | reg_Gy[10];
 
     assign adder_out = xm_out + ym_out + {10'b0, adder_cin};
-    assign G         = (adder_out > 11'd255) ? 8'd255 : adder_out[7:0];
+    assign G = (adder_out > 11'd255) ? 8'd255 : adder_out[7:0];
 
 endmodule
