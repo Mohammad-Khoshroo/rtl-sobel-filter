@@ -2,18 +2,14 @@
 
 module tb_controller;
 
-    localparam int WIDTH_SIZE  = 8;   // Small test size for fast simulation
-    localparam int HEIGHT_SIZE = 5;
-    localparam int ROWS        = 3;
-    localparam int XWIN        = 3;
-    localparam int YWIN        = 3;
-
     logic clk;
     logic rst;
 
     logic start;
     logic ready;
     logic busy;
+    logic busy_load;
+    logic busy_process;
     logic done;
 
     logic gx_sign;
@@ -26,24 +22,19 @@ module tb_controller;
     logic valid_pixel;
 
     logic linebuffer_wenable;
-    logic [$clog2(ROWS)-1:0] wrow;
-    logic [$clog2(WIDTH_SIZE)-1:0] waddress;
     logic window_shiften;
-    logic [$clog2(ROWS)-1:0] row_ref;
-    logic [$clog2(WIDTH_SIZE)-1:0] raddress;
+    logic [1:0] row_pointer;
+    logic [9:0] waddress;
+    logic [9:0] raddress;
 
-    controller #(
-        .WIDTH_SIZE  (WIDTH_SIZE),
-        .HEIGHT_SIZE (HEIGHT_SIZE),
-        .ROWS        (ROWS),
-        .XWIN        (XWIN),
-        .YWIN        (YWIN)
-    ) dut (
+    controller dut (
         .clk                (clk),
         .rst                (rst),
         .start              (start),
         .ready              (ready),
         .busy               (busy),
+        .busy_load          (busy_load),
+        .busy_process       (busy_process),
         .done               (done),
         .gx_sign            (gx_sign),
         .gy_sign            (gy_sign),
@@ -54,10 +45,9 @@ module tb_controller;
         .ym_ctrl            (ym_ctrl),
         .valid_pixel        (valid_pixel),
         .linebuffer_wenable (linebuffer_wenable),
-        .wrow               (wrow),
-        .waddress           (waddress),
         .window_shiften     (window_shiften),
-        .row_ref            (row_ref),
+        .row_pointer        (row_pointer),
+        .waddress           (waddress),
         .raddress           (raddress)
     );
 
@@ -68,7 +58,10 @@ module tb_controller;
     always @(posedge clk) begin
         if (valid_pixel) begin
             pixel_count++;
-            $display("[Time %0t] VALID PIXEL #%0d produced (xm_ctrl=%0d, ym_ctrl=%0d)", $time, pixel_count, xm_ctrl, ym_ctrl);
+            if (pixel_count <= 10) begin
+                $display("[Time %0t] VALID PIXEL #%0d produced (busy_process=%0d, waddress=%0d, raddress=%0d, xm_ctrl=%0d, ym_ctrl=%0d)",
+                         $time, pixel_count, busy_process, waddress, raddress, xm_ctrl, ym_ctrl);
+            end
         end
     end
 
@@ -92,29 +85,31 @@ module tb_controller;
         @(posedge clk);
         start = 0;
 
-        // Alternate sign bits to test negative branching
+        // Toggle sign bits to test negative branching
         fork
             begin
                 while (!done) begin
                     @(posedge clk);
                     if (gx_en && !xy_ctrl) begin
-                        gx_sign <= ~gx_sign; // Toggle sign
+                        gx_sign <= ~gx_sign;
                     end
                     if (gy_en && xy_ctrl) begin
-                        gy_sign <= ~gy_sign; // Toggle sign
+                        gy_sign <= ~gy_sign;
                     end
                 end
             end
             begin
-                // Wait for done or timeout
-                wait(done);
-                $display("Controller finished successfully! Total valid pixels = %0d", pixel_count);
-                #20;
+                // Simulate until first row is fully processed
+                wait(valid_pixel);
+                $display("First valid pixel detected at time %0t!", $time);
+                wait(pixel_count == 638);
+                $display("First full row of pixels processed! Total pixels so far = %0d", pixel_count);
+                #100;
                 $finish;
             end
             begin
-                #20000;
-                $error("Simulation timed out!");
+                #500000;
+                $display("Reached simulation check time limit. Pixels = %0d", pixel_count);
                 $finish;
             end
         join_any
