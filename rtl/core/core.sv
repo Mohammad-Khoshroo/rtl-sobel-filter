@@ -84,9 +84,7 @@ module core (
         .clk       (clk),
         .reset     (rst),
         .enable    (gx_en),
-        .pl_enable (1'b0),
         .d         (adder_out),
-        .pl        (11'b0),
         .q         (reg_Gx)
     );
 
@@ -97,9 +95,7 @@ module core (
         .clk       (clk),
         .reset     (rst),
         .enable    (gy_en),
-        .pl_enable (1'b0),
         .d         (adder_out),
-        .pl        (11'b0),
         .q         (reg_Gy)
     );
 
