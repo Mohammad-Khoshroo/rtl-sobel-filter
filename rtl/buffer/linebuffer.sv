@@ -27,7 +27,7 @@ module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
     output logic [WIDTH-1:0] rdata [ROWS-1:0]
 );
 
-    reg [WIDTH-1:0]  mem [ROWS-1:0][SIZE-1:0];
+    (* ram_style = "block" *) reg [WIDTH-1:0]  mem [ROWS-1:0][SIZE-1:0];
 
     always @(posedge clk) begin : WRITE_DATA
         
@@ -53,18 +53,18 @@ module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
     
     end
     
-    always_comb begin : READ_DATA
-
-        READ_UNKNOWN: assert #0 (!$isunknown(raddress))
-            else $warning("Read address or row contains X or Z bits!");
-        
-        READ_ADDRESS_RANGE: assert #0 (int'(raddress) < SIZE)
-            else $error("Window horizontal range exceeds SIZE!");   
-        
-        for (int r = 0; r < ROWS; r++) begin
-        rdata[r] = mem[r][raddress];
+    always @(posedge clk) begin : READ_DATA
+        if (!rst) begin
+            READ_UNKNOWN: assert (!$isunknown(raddress))
+                else $warning("Read address or row contains X or Z bits!");
+            
+            READ_ADDRESS_RANGE: assert (int'(raddress) < SIZE)
+                else $error("Window horizontal range exceeds SIZE!");   
+            
+            for (int r = 0; r < ROWS; r++) begin
+                rdata[r] <= mem[r][raddress];
+            end
         end
-        
     end
 
 endmodule

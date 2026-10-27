@@ -1,0 +1,38 @@
+==================================================================
+   Sobel Accelerator Testbench - FPGA Computer Assignment #1     
+   Image Dimensions: 640 x 853 | Total Pixels: 545920
+==================================================================
+[Time 0 ns] Loading image_in.hex into testbench memory...
+[Time 45000 ns] Reset deasserted. DUT is READY. Triggering start pulse...
+[Time 19345000 ns] First valid pixel detected from accelerator!
+[Time 19355000 ns] [MONITOR] Valid Pixel #1 = 0xff (255)
+[Time 19395000 ns] [MONITOR] Valid Pixel #2 = 0xff (255)
+[Time 19445000 ns] [MONITOR] Valid Pixel #3 = 0xff (255)
+[Time 19505000 ns] [MONITOR] Valid Pixel #4 = 0xff (255)
+[Time 19565000 ns] [MONITOR] Valid Pixel #5 = 0xff (255)
+[Time 19615000 ns] [MONITOR] Valid Pixel #6 = 0xff (255)
+[Time 19665000 ns] [MONITOR] Valid Pixel #7 = 0xff (255)
+[Time 19715000 ns] [MONITOR] Valid Pixel #8 = 0xff (255)
+[Time 19765000 ns] [MONITOR] Valid Pixel #9 = 0xff (255)
+[Time 19815000 ns] [MONITOR] Valid Pixel #10 = 0xff (255)
+[Time 52025000 ns] [PROGRESS] Completed Edge Row 1 / 851 (Total Pixels: 638)
+[Time 3437015000 ns] [PROGRESS] Completed Edge Row 100 / 851 (Total Pixels: 63800)
+[Time 6887705000 ns] [PROGRESS] Completed Edge Row 200 / 851 (Total Pixels: 127600)
+[Time 10409295000 ns] [PROGRESS] Completed Edge Row 300 / 851 (Total Pixels: 191400)
+[Time 14033865000 ns] [PROGRESS] Completed Edge Row 400 / 851 (Total Pixels: 255200)
+[Time 17706755000 ns] [PROGRESS] Completed Edge Row 500 / 851 (Total Pixels: 319000)
+[Time 21430555000 ns] [PROGRESS] Completed Edge Row 600 / 851 (Total Pixels: 382800)
+[Time 25145245000 ns] [PROGRESS] Completed Edge Row 700 / 851 (Total Pixels: 446600)
+[Time 28936715000 ns] [PROGRESS] Completed Edge Row 800 / 851 (Total Pixels: 510400)
+[Time 30885155000 ns] [PROGRESS] Completed Edge Row 851 / 851 (Total Pixels: 542938)
+[Time 30885155000 ns] >>> DUT asserted DONE interrupt! <<<
+------------------------------------------------------------------
+Simulation Summary:
+  Total Input Pixels Fed     : 545920 / 545920
+  Total Valid Pixels Produced: 542938 / 542938
+  Total Edge Rows Processed  : 851 / 851
+  Assertion Errors           : 0
+------------------------------------------------------------------
+==================================================================
+   TESTBENCH PASSED SUCCESSFULLY: ALL CHECKS AND PIXELS VALID!   
+==================================================================

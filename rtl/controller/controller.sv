@@ -49,8 +49,11 @@ module controller (
     logic [9:0] row;
     logic [9:0] col;
 
+    wire is_load_last = (current_state == LOAD_ROW) && co_wcol;
     assign waddress = col;
-    assign raddress = (col >= WIDTH_SIZE) ? (WIDTH_SIZE - 10'd1) : col;
+    assign raddress = is_load_last                  ? 10'd0 :
+                      (current_state == PREPARE_WIN) ? ((col + 10'd1 >= WIDTH_SIZE) ? (WIDTH_SIZE - 10'd1) : (col + 10'd1)) :
+                      (col >= WIDTH_SIZE)            ? (WIDTH_SIZE - 10'd1) : col;
 
     logic co_wcol;
     logic co_rcol;
