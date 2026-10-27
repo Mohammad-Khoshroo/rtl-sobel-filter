@@ -19,8 +19,8 @@ module core (
     input xy_ctrl,
     input gx_en,
     input gy_en,
-    input xm_ctrl,
-    input ym_ctrl,
+    input [1:0] xm_ctrl,
+    input [1:0] ym_ctrl,
 
     output logic [7:0] G
 );
@@ -100,12 +100,20 @@ module core (
     );
 
     logic [10:0] xm_out, ym_out;
-    assign xm_out = xm_ctrl ? ~reg_Gx : s_csa4;
-    assign ym_out = ym_ctrl ? ~reg_Gy : c_csa4;
+    assign xm_out = (xm_ctrl == 2'd0) ? s_csa4 :
+                    (xm_ctrl == 2'd1) ? ~reg_Gx :
+                    (xm_ctrl == 2'd2) ? '0 :
+                    (xm_ctrl == 2'd3) ? reg_Gx;
+
+    assign ym_out = (ym_ctrl == 2'd0) ? c_csa4 :
+                    (ym_ctrl == 2'd1) ? '0 :
+                    (ym_ctrl == 2'd2) ? ~reg_Gy :
+                    (ym_ctrl == 2'd3) ? reg_Gy;
 
     wire adder_cin = reg_Gx[10] | reg_Gy[10];
 
-    assign adder_out = xm_out + ym_out + {10'b0, adder_cin};
+    assign adder_out = xm_out + ym_out + adder_cin;
+    
     assign G = (adder_out > 11'd255) ? 8'd255 : adder_out[7:0];
 
 endmodule
