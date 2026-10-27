@@ -4,3 +4,6 @@ obj_dir
 
 build/
 build
+
+
+*.vcd

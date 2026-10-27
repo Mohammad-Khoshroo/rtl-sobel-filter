@@ -50,7 +50,7 @@ module controller (
     logic [9:0] col;
 
     assign waddress = col;
-    assign raddress = col;
+    assign raddress = (col >= WIDTH_SIZE) ? (WIDTH_SIZE - 10'd1) : col;
 
     logic co_wcol;
     logic co_rcol;

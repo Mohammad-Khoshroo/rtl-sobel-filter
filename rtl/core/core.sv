@@ -1,3 +1,11 @@
+`ifndef CSA_SV
+`include "CSA.sv"
+`endif
+
+`ifndef REGISTER_MODULE
+`include "Register.sv"
+`endif
+
 // =============================================================================
 // core module_name (
 //     .clk     (clk),
@@ -8,6 +16,8 @@
 //     .gy_en   (gy_en),
 //     .xm_ctrl (xm_ctrl),
 //     .ym_ctrl (ym_ctrl),
+//     .gx_sign (gx_sign),
+//     .gy_sign (gy_sign),
 //     .G       (G)
 // );
 // =============================================================================
@@ -22,6 +32,8 @@ module core (
     input [1:0] xm_ctrl,
     input [1:0] ym_ctrl,
 
+    output logic gx_sign,
+    output logic gy_sign,
     output logic [7:0] G
 );
 
@@ -102,18 +114,22 @@ module core (
     logic [10:0] xm_out, ym_out;
     assign xm_out = (xm_ctrl == 2'd0) ? s_csa4 :
                     (xm_ctrl == 2'd1) ? ~reg_Gx :
-                    (xm_ctrl == 2'd2) ? '0 :
-                    (xm_ctrl == 2'd3) ? reg_Gx;
+                    (xm_ctrl == 2'd2) ? 11'd0 :
+                    (xm_ctrl == 2'd3) ? reg_Gx : 11'd0;
 
     assign ym_out = (ym_ctrl == 2'd0) ? c_csa4 :
-                    (ym_ctrl == 2'd1) ? '0 :
+                    (ym_ctrl == 2'd1) ? 11'd0 :
                     (ym_ctrl == 2'd2) ? ~reg_Gy :
-                    (ym_ctrl == 2'd3) ? reg_Gy;
+                    (ym_ctrl == 2'd3) ? reg_Gy : 11'd0;
 
-    wire adder_cin = reg_Gx[10] | reg_Gy[10];
+    wire adder_cin = (xm_ctrl == 2'd1) ? reg_Gx[10] :
+                     (ym_ctrl == 2'd2) ? reg_Gy[10] : 1'b0;
 
-    assign adder_out = xm_out + ym_out + adder_cin;
+    assign adder_out = xm_out + ym_out + {10'd0, adder_cin};
     
+    assign gx_sign = adder_out[10];
+    assign gy_sign = adder_out[10];
+
     assign G = (adder_out > 11'd255) ? 8'd255 : adder_out[7:0];
 
 endmodule
