@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module controller (
     input clk,
     input rst,
@@ -56,7 +58,7 @@ module controller (
 
     assign co_wcol       = (col == (WIDTH_SIZE - 1));
     assign co_rcol       = (col == WIDTH_SIZE);
-    assign co_row        = (row == HEIGHT_SIZE);
+    assign co_row        = (row >= HEIGHT_SIZE);
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -90,9 +92,7 @@ module controller (
                     end else begin
                         col <= 10'd0;
                         row <= row + 10'd1;
-                        if (row == 10'd3) begin
-                            row_pointer <= (row_pointer == 2'd2) ? 2'd0 : (row_pointer + 2'd1);
-                        end
+                        row_pointer <= (row_pointer == 2'd2) ? 2'd0 : (row_pointer + 2'd1);
                     end
                 end
 

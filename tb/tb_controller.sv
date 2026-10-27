@@ -53,14 +53,23 @@ module tb_controller;
 
     always #5 clk = ~clk;
 
-    int pixel_count = 0;
+    int pixel_count;
+    int row_count;
 
-    always @(posedge clk) begin
-        if (valid_pixel) begin
-            pixel_count++;
-            if (pixel_count <= 10) begin
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            pixel_count <= 0;
+            row_count   <= 0;
+        end else if (valid_pixel) begin
+            pixel_count <= pixel_count + 1;
+            if (pixel_count <= 5) begin
                 $display("[Time %0t] VALID PIXEL #%0d produced (busy_process=%0d, waddress=%0d, raddress=%0d, xm_ctrl=%0d, ym_ctrl=%0d)",
-                         $time, pixel_count, busy_process, waddress, raddress, xm_ctrl, ym_ctrl);
+                         $time, pixel_count + 1, busy_process, waddress, raddress, xm_ctrl, ym_ctrl);
+            end
+            if ((pixel_count + 1) % 638 == 0) begin
+                row_count <= row_count + 1;
+                $display("[Time %0t] >>> Completed Edge Row %0d! Total pixels = %0d, row_pointer = %0d <<<",
+                         $time, row_count, pixel_count + 1, row_pointer);
             end
         end
     end
@@ -99,17 +108,19 @@ module tb_controller;
                 end
             end
             begin
-                // Simulate until first row is fully processed
+                // Simulate until done (full image)
                 wait(valid_pixel);
                 $display("First valid pixel detected at time %0t!", $time);
-                wait(pixel_count == 638);
-                $display("First full row of pixels processed! Total pixels so far = %0d", pixel_count);
+                wait(done);
+                $display("[Time %0t] Controller asserted DONE!", $time);
+                $display("SUCCESS: Entire image processed! Total pixels = %0d, Total edge rows = %0d", pixel_count, row_count);
                 #100;
+                assert (ready == 1 && busy == 0) else $error("Controller not ready after done!");
                 $finish;
             end
             begin
-                #500000;
-                $display("Reached simulation check time limit. Pixels = %0d", pixel_count);
+                #100000000;
+                $display("Reached simulation check time limit. Pixels = %0d, Rows = %0d", pixel_count, row_count);
                 $finish;
             end
         join_any
