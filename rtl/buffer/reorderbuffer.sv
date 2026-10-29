@@ -1,18 +1,20 @@
 // =============================================================================
 // ReorderBuffer #(
 //     .WIDTH       (8),
-//     .ROWS        (3),
+//     .ROWS        (2),
 //     .YWIN        (3)
 // ) module_name (
 //     .row_ref     (row_ref),     // Pointer to top row for circular alignment
 //     .raw_col     (raw_col),
+//     .live_pixel  (live_pixel),
 //     .ordered_col (ordered_col)
 // );
 // =============================================================================
 
-module ReorderBuffer #( parameter WIDTH = 8, ROWS  = 3, YWIN  = 3 ) (
+module ReorderBuffer #( parameter WIDTH = 8, ROWS  = 2, YWIN  = 3 ) (
     input  logic [$clog2(ROWS)-1:0] row_ref,
     input  logic [WIDTH-1:0] raw_col [ROWS-1:0],
+    input  logic [WIDTH-1:0] live_pixel,
     output logic [WIDTH-1:0] ordered_col [YWIN-1:0]
 );
 
@@ -24,7 +26,7 @@ module ReorderBuffer #( parameter WIDTH = 8, ROWS  = 3, YWIN  = 3 ) (
         ROW_RANGE: assert #0 (int'(row_ref) < ROWS)
             else $error("Reorder row index (row_ref) out of range!");
 
-        for (int unsigned y = 0; y < YWIN; y++) begin
+        for (int unsigned y = 0; y < YWIN - 1; y++) begin
             
             int unsigned index;
             int unsigned phys_row;
@@ -36,6 +38,8 @@ module ReorderBuffer #( parameter WIDTH = 8, ROWS  = 3, YWIN  = 3 ) (
             ordered_col[y] = raw_col[phys_row];
         
         end
+
+        ordered_col[YWIN - 1] = live_pixel;
         
     end
 

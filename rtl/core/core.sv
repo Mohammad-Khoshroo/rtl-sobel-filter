@@ -1,66 +1,81 @@
-`ifndef CSA_SV
-`include "CSA.sv"
-`endif
-
-`ifndef REGISTER_MODULE
-`include "Register.sv"
-`endif
-
 // =============================================================================
 // core module_name (
-//     .clk     (clk),
-//     .rst     (rst),
-//     .window  (window),
-//     .xy_ctrl (xy_ctrl),
-//     .gx_en   (gx_en),
-//     .gy_en   (gy_en),
-//     .xm_ctrl (xm_ctrl),
-//     .ym_ctrl (ym_ctrl),
-//     .gx_sign (gx_sign),
-//     .gy_sign (gy_sign),
-//     .G       (G)
+//     .clk      (clk),
+//     .rst      (rst),
+//     .shift_en (shift_en),
+//     .window   (window),
+//     .G_sat    (G_sat)
 // );
 // =============================================================================
 
 module core (
-    input clk, rst,
-    input [7:0] window [2:0][2:0],
+    input  logic       clk,
+    input  logic       rst,
+    input  logic       shift_en,
+    input  logic [7:0] window [2:0][2:0],
 
-    input xy_ctrl,
-    input gx_en,
-    input gy_en,
-    input [1:0] xm_ctrl,
-    input [1:0] ym_ctrl,
-
-    output logic gx_sign,
-    output logic gy_sign,
-    output logic [7:0] G
+    output logic [7:0] G_sat
 );
 
-    wire [10:0] ordered_window [5:0];
+    // Gx computation
+    // 
+    // 
+    /////////////////
+    wire [10:0] p02    = {3'b000, window[2][0]};
+    wire [10:0] p12_2x = {2'b00,  window[2][1], 1'b0};
+    wire [10:0] p22    = {3'b000, window[2][2]};
 
-    assign ordered_window[0] = ~{3'b000, window[0][0]};
-    assign ordered_window[1] = xy_ctrl ? ~{2'b00, window[1][0], 1'b0} : ~{2'b00, window[0][1], 1'b0};
-    assign ordered_window[2] = xy_ctrl ? ~{3'b000, window[2][0]}      : ~{3'b000, window[0][2]};
-    assign ordered_window[3] = xy_ctrl ? {3'b000, window[0][2]}       : {3'b000, window[2][0]};
-    assign ordered_window[4] = xy_ctrl ? {2'b00, window[1][2], 1'b0}  : {2'b00, window[2][1], 1'b0};
-    assign ordered_window[5] = {3'b000, window[2][2]};
+    logic [10:0] s_c2, c_c2;
+    CSA #(.WIDTH(11)) u_csa_c2 (
+        .a     (p02),
+        .b     (p12_2x),
+        .c     (p22),
+        .cin   (1'b0),
+        .sum   (s_c2),
+        .carry (c_c2)
+    );
+
+    wire [10:0] c2 = s_c2 + c_c2;
+
+    logic [10:0] reg_c1, reg_c0;
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            reg_c1 <= 11'd0;
+            reg_c0 <= 11'd0;
+        end else if (shift_en) begin
+            reg_c1 <= c2;
+            reg_c0 <= reg_c1;
+        end
+    end
+
+    wire [10:0] Gx = c2 + (~reg_c0) + 1'b1;
+
+    // Gy computation
+    // 
+    // 
+    /////////////////
+    wire [10:0] p20    = {3'b000, window[0][2]};
+    wire [10:0] p21_x2 = {2'b00,  window[1][2], 1'b0};
+    
+    wire [10:0] p00_not    = ~{3'b000, window[0][0]};
+    wire [10:0] p01_x2_not = ~{2'b00,  window[1][0], 1'b0};
+    wire [10:0] p02_not    = ~{3'b000, window[2][0]};
 
     logic [10:0] s_pos, c_pos;
     CSA #(.WIDTH(11)) u_csa_pos (
-        .a     (ordered_window[3]),
-        .b     (ordered_window[4]),
-        .c     (ordered_window[5]),
-        .cin   (1'b0),
+        .a     (p20),
+        .b     (p21_x2),
+        .c     (p22),
+        .cin   (1'b1),
         .sum   (s_pos),
         .carry (c_pos)
     );
 
     logic [10:0] s_neg, c_neg;
     CSA #(.WIDTH(11)) u_csa_neg (
-        .a     (ordered_window[0]),
-        .b     (ordered_window[1]),
-        .c     (ordered_window[2]),
+        .a     (p00_not),
+        .b     (p01_x2_not),
+        .c     (p02_not),
         .cin   (1'b1),
         .sum   (s_neg),
         .carry (c_neg)
@@ -81,55 +96,26 @@ module core (
         .a     (s_pos),
         .b     (s_mid),
         .c     (c_mid),
-        .cin   (1'b1),
+        .cin   (1'b0),
         .sum   (s_csa4),
         .carry (c_csa4)
     );
 
-    logic [10:0] adder_out;
-    logic [10:0] reg_Gx, reg_Gy;
+    wire [10:0] Gy = s_csa4 + c_csa4;
 
-    Register #(
-        .WIDTH (11),
-        .INIT  (11'b0)
-    ) u_reg_gx (
-        .clk       (clk),
-        .reset     (rst),
-        .enable    (gx_en),
-        .d         (adder_out),
-        .q         (reg_Gx)
-    );
+    wire gy_sign, gx_sign;
 
-    Register #(
-        .WIDTH (11),
-        .INIT  (11'b0)
-    ) u_reg_gy (
-        .clk       (clk),
-        .reset     (rst),
-        .enable    (gy_en),
-        .d         (adder_out),
-        .q         (reg_Gy)
-    );
+    assign gx_sign = Gx[10];
+    assign gy_sign = Gy[10];
 
-    logic [10:0] xm_out, ym_out;
-    assign xm_out = (xm_ctrl == 2'd0) ? s_csa4 :
-                    (xm_ctrl == 2'd1) ? ~reg_Gx :
-                    (xm_ctrl == 2'd2) ? 11'd0 :
-                    (xm_ctrl == 2'd3) ? reg_Gx : 11'd0;
+    wire [10:0] xor_Gx = Gx ^ {11{gx_sign}};
+    wire [10:0] xor_Gy = Gy ^ {11{gy_sign}};
 
-    assign ym_out = (ym_ctrl == 2'd0) ? c_csa4 :
-                    (ym_ctrl == 2'd1) ? 11'd0 :
-                    (ym_ctrl == 2'd2) ? ~reg_Gy :
-                    (ym_ctrl == 2'd3) ? reg_Gy : 11'd0;
+    wire cin = gx_sign | gy_sign;
 
-    wire adder_cin = (xm_ctrl == 2'd1) ? reg_Gx[10] :
-                     (ym_ctrl == 2'd2) ? reg_Gy[10] : 1'b0;
+    // i have a -1 at most error 
+    wire [10:0] G = xor_Gx + xor_Gy + cin;
 
-    assign adder_out = xm_out + ym_out + {10'd0, adder_cin};
-    
-    assign gx_sign = adder_out[10];
-    assign gy_sign = adder_out[10];
-
-    assign G = (adder_out > 11'd255) ? 8'd255 : adder_out[7:0];
+    assign G_sat = |(G[10:8]) ? 8'd255 : G[7:0];
 
 endmodule

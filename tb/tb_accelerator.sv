@@ -42,34 +42,30 @@ module tb_accelerator;
 
     logic        ready;
     logic        busy;
-    logic        busy_load;
-    logic        busy_process;
     logic        done;
-    logic        linebuffer_wenable;
     logic        valid_pixel;
     logic [7:0]  pixel_out;
 
     // -------------------------------------------------------------------------
-    // DUT Instantiation
+    // DUT Instantiation (Clean Streaming Interface)
     // -------------------------------------------------------------------------
     accelerator #(
         .WIDTH_SIZE  (WIDTH_SIZE),
         .HEIGHT_SIZE (HEIGHT_SIZE),
         .PIXEL_WIDTH (8)
     ) dut (
-        .clk                (clk),
-        .rst                (rst),
-        .start              (start),
-        .pixel_in           (pixel_in),
-        .ready              (ready),
-        .busy               (busy),
-        .busy_load          (busy_load),
-        .busy_process       (busy_process),
-        .done               (done),
-        .linebuffer_wenable (linebuffer_wenable),
-        .valid_pixel        (valid_pixel),
-        .pixel_out          (pixel_out)
+        .clk         (clk),
+        .rst         (rst),
+        .start       (start),
+        .pixel_in    (pixel_in),
+        .ready       (ready),
+        .busy        (busy),
+        .done        (done),
+        .valid_pixel (valid_pixel),
+        .pixel_out   (pixel_out)
     );
+
+    wire linebuffer_wenable = dut.linebuffer_wenable;
 
     // -------------------------------------------------------------------------
     // Clock Generation (100 MHz)
@@ -196,23 +192,40 @@ module tb_accelerator;
         end
     end
 
-    // 4. Mutex of busy_load and busy_process: Loading and window computation do not collide
+    // 4. Streaming assertion: valid_pixel can only be asserted when busy is high
     always @(posedge clk) begin
         if (!rst) begin
-            A4_LOAD_PROCESS_MUTEX: assert (!(busy_load && busy_process))
+            A4_VALID_DURING_BUSY: assert (!valid_pixel || busy)
                 else begin
-                    $error("[ASSERTION FAILED] Both busy_load and busy_process are asserted simultaneously!");
+                    $error("[ASSERTION FAILED] valid_pixel asserted while busy is low!");
                     assertion_errors++;
                 end
         end
     end
 
-    // 5. Done assertion: When done is asserted, busy must be deasserted and ready must return high
+    // 5. Done assertion: When done is asserted, busy must be deasserted
     always @(posedge clk) begin
         if (!rst && done) begin
-            A5_DONE_READY: assert (ready == 1'b1 && busy == 1'b0)
+            A5_DONE_BUSY: assert (busy == 1'b0)
                 else begin
-                    $error("[ASSERTION FAILED] done asserted but ready/busy not in IDLE state!");
+                    $error("[ASSERTION FAILED] done asserted but busy is still high!");
+                    assertion_errors++;
+                end
+        end
+    end
+
+    // 6. Post-Done Ready assertion: In the cycle after done, controller returns to IDLE (ready == 1)
+    logic done_q;
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) done_q <= 1'b0;
+        else     done_q <= done;
+    end
+
+    always @(posedge clk) begin
+        if (!rst && done_q) begin
+            A6_POST_DONE_READY: assert (ready == 1'b1 && busy == 1'b0)
+                else begin
+                    $error("[ASSERTION FAILED] Cycle after done, controller is not ready in IDLE!");
                     assertion_errors++;
                 end
         end
