@@ -203,12 +203,29 @@ module tb_accelerator;
         end
     end
 
-    // 5. Done assertion: When done is asserted, busy must be deasserted and ready must return high
+    // 5. Done assertion: When done is asserted, busy must be deasserted
     always @(posedge clk) begin
         if (!rst && done) begin
-            A5_DONE_READY: assert (ready == 1'b1 && busy == 1'b0)
+            A5_DONE_BUSY: assert (busy == 1'b0)
                 else begin
-                    $error("[ASSERTION FAILED] done asserted but ready/busy not in IDLE state!");
+                    $error("[ASSERTION FAILED] done asserted but busy is still high!");
+                    assertion_errors++;
+                end
+        end
+    end
+
+    // 6. Post-Done Ready assertion: In the cycle after done, controller returns to IDLE (ready == 1)
+    logic done_q;
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) done_q <= 1'b0;
+        else     done_q <= done;
+    end
+
+    always @(posedge clk) begin
+        if (!rst && done_q) begin
+            A6_POST_DONE_READY: assert (ready == 1'b1 && busy == 1'b0)
+                else begin
+                    $error("[ASSERTION FAILED] Cycle after done, controller is not ready in IDLE!");
                     assertion_errors++;
                 end
         end

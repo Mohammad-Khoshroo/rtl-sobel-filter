@@ -50,7 +50,6 @@ module SlidingWindowBuffer #(
     logic [WIDTH-1:0] raw_col [ROWS-1:0];
     logic [WIDTH-1:0] ordered_col [YWIN-1:0];
 
-    // Align live streaming pixel with BRAM 1-cycle read latency
     logic [WIDTH-1:0] live_pixel_reg;
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
