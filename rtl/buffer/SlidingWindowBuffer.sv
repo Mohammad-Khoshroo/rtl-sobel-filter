@@ -5,11 +5,24 @@
 `include "WindowBuffer.sv"
 
 // =============================================================================
-// SlidingWindowBuffer (2-Line Streaming Architecture)
-// Integrates:
-//   - 2-row LineBuffer (BRAM storage for previous 2 rows)
-//   - ReorderBuffer (circular row multiplexing + live pixel ingestion)
-//   - WindowBuffer (3x3 spatial window shift register)
+// SlidingWindowBuffer #(
+//     .WIDTH    (8),
+//     .ROWS     (2),
+//     .SIZE     (640),
+//     .XWIN     (3),
+//     .YWIN     (3)
+// ) module_name (
+//     .clk      (clk),
+//     .rst      (rst),
+//     .wenable  (wenable),
+//     .wdata    (wdata),
+//     .wrow     (wrow),
+//     .waddress (waddress),
+//     .renable  (renable),
+//     .rrow     (rrow),       // Pointer to top row for circular alignment
+//     .raddress (raddress),
+//     .rdata    (rdata)
+// );
 // =============================================================================
 
 module SlidingWindowBuffer #(
