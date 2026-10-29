@@ -106,6 +106,6 @@ module core (
     // i have a -1 at most error 
     wire [10:0] G = xor_Gx + xor_Gy + cin;
 
-    assign G_sat = |(G[11:8] & 4'b1111) ? 8'd255 : G[7:0];
+    assign G_sat = |(G[10:8]) ? 8'd255 : G[7:0];
 
 endmodule

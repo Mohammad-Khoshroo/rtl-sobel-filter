@@ -42,10 +42,7 @@ module tb_accelerator;
 
     logic        ready;
     logic        busy;
-    logic        busy_load;
-    logic        busy_process;
     logic        done;
-    logic        linebuffer_wenable;
     logic        valid_pixel;
     logic [7:0]  pixel_out;
 
@@ -68,10 +65,7 @@ module tb_accelerator;
         .pixel_out   (pixel_out)
     );
 
-    // Hierarchical taps for verification monitoring
-    assign busy_load          = dut.busy_load;
-    assign busy_process       = dut.busy_process;
-    assign linebuffer_wenable = dut.linebuffer_wenable;
+    wire linebuffer_wenable = dut.linebuffer_wenable;
 
     // -------------------------------------------------------------------------
     // Clock Generation (100 MHz)
@@ -198,12 +192,12 @@ module tb_accelerator;
         end
     end
 
-    // 4. Mutex of busy_load and busy_process: Loading and window computation do not collide
+    // 4. Streaming assertion: valid_pixel can only be asserted when busy is high
     always @(posedge clk) begin
         if (!rst) begin
-            A4_LOAD_PROCESS_MUTEX: assert (!(busy_load && busy_process))
+            A4_VALID_DURING_BUSY: assert (!valid_pixel || busy)
                 else begin
-                    $error("[ASSERTION FAILED] Both busy_load and busy_process are asserted simultaneously!");
+                    $error("[ASSERTION FAILED] valid_pixel asserted while busy is low!");
                     assertion_errors++;
                 end
         end
