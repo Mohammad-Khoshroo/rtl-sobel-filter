@@ -1,5 +1,3 @@
-`timescale 1ns/1ps
-
 module controller #(
     parameter WIDTH_SIZE  = 640,
     parameter HEIGHT_SIZE = 853
