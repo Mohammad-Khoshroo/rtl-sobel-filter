@@ -50,26 +50,28 @@ module tb_accelerator;
     logic [7:0]  pixel_out;
 
     // -------------------------------------------------------------------------
-    // DUT Instantiation
+    // DUT Instantiation (Clean Streaming Interface)
     // -------------------------------------------------------------------------
     accelerator #(
         .WIDTH_SIZE  (WIDTH_SIZE),
         .HEIGHT_SIZE (HEIGHT_SIZE),
         .PIXEL_WIDTH (8)
     ) dut (
-        .clk                (clk),
-        .rst                (rst),
-        .start              (start),
-        .pixel_in           (pixel_in),
-        .ready              (ready),
-        .busy               (busy),
-        .busy_load          (busy_load),
-        .busy_process       (busy_process),
-        .done               (done),
-        .linebuffer_wenable (linebuffer_wenable),
-        .valid_pixel        (valid_pixel),
-        .pixel_out          (pixel_out)
+        .clk         (clk),
+        .rst         (rst),
+        .start       (start),
+        .pixel_in    (pixel_in),
+        .ready       (ready),
+        .busy        (busy),
+        .done        (done),
+        .valid_pixel (valid_pixel),
+        .pixel_out   (pixel_out)
     );
+
+    // Hierarchical taps for verification monitoring
+    assign busy_load          = dut.busy_load;
+    assign busy_process       = dut.busy_process;
+    assign linebuffer_wenable = dut.linebuffer_wenable;
 
     // -------------------------------------------------------------------------
     // Clock Generation (100 MHz)

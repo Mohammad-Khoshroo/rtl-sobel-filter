@@ -7,50 +7,84 @@
 `endif
 
 // =============================================================================
-// core module_name (
-//     .clk     (clk),
-//     .rst     (rst),
-//     .window  (window),
-//     .xy_ctrl (xy_ctrl),
-//     .gx_en   (gx_en),
-//     .gy_en   (gy_en),
-//     .xm_ctrl (xm_ctrl),
-//     .ym_ctrl (ym_ctrl),
-//     .gx_sign (gx_sign),
-//     .gy_sign (gy_sign),
-//     .G       (G)
-// );
+// Optimized Parallel Sobel Core Datapath
+// Implements:
+//   - Gx branch: Column sum (C2) calculation with shift registers (C1, C0)
+//                Gx = C2 - C0
+//   - Gy branch: 4-CSA Wallace reduction tree + CPA
+//                Gy = Row2 - Row0
+//   - Absolute Value & Merged Sum:
+//                cin = Gx[10] | Gy[10]
+//                G = (Gx ^ sign_x) + (Gy ^ sign_y) + cin
+//   - Clamping to [0, 255]
 // =============================================================================
 
 module core (
-    input clk, rst,
-    input [7:0] window [2:0][2:0],
+    input  logic       clk,
+    input  logic       rst,
+    input  logic       shift_en,
+    input  logic [7:0] window [2:0][2:0],
 
-    input xy_ctrl,
-    input gx_en,
-    input gy_en,
-    input [1:0] xm_ctrl,
-    input [1:0] ym_ctrl,
-
-    output logic gx_sign,
-    output logic gy_sign,
+    output logic       gx_sign,
+    output logic       gy_sign,
     output logic [7:0] G
 );
 
-    wire [10:0] ordered_window [5:0];
+    // =========================================================================
+    // 1. Gx Branch: Column Sum (C2) and Shift Registers (C1, C0)
+    // =========================================================================
+    // Window indexing: window[x][y] where x is column (0:left, 1:mid, 2:right), y is row (0:top, 1:mid, 2:bot)
+    // Rightmost column elements: P02, P12, P22
+    wire [10:0] w_p02    = {3'b000, window[2][0]};
+    wire [10:0] w_p12_x2 = {2'b00,  window[2][1], 1'b0};
+    wire [10:0] w_p22    = {3'b000, window[2][2]};
 
-    assign ordered_window[0] = ~{3'b000, window[0][0]};
-    assign ordered_window[1] = xy_ctrl ? ~{2'b00, window[1][0], 1'b0} : ~{2'b00, window[0][1], 1'b0};
-    assign ordered_window[2] = xy_ctrl ? ~{3'b000, window[2][0]}      : ~{3'b000, window[0][2]};
-    assign ordered_window[3] = xy_ctrl ? {3'b000, window[0][2]}       : {3'b000, window[2][0]};
-    assign ordered_window[4] = xy_ctrl ? {2'b00, window[1][2], 1'b0}  : {2'b00, window[2][1], 1'b0};
-    assign ordered_window[5] = {3'b000, window[2][2]};
+    logic [10:0] s_c2, c_c2;
+    CSA #(.WIDTH(11)) u_csa_c2 (
+        .a     (w_p02),
+        .b     (w_p12_x2),
+        .c     (w_p22),
+        .cin   (1'b0),
+        .sum   (s_c2),
+        .carry (c_c2)
+    );
+
+    wire [10:0] c2 = s_c2 + c_c2;
+
+    // Shift registers for column reuse: C2 -> C1 -> C0
+    logic [10:0] reg_c1, reg_c0;
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            reg_c1 <= 11'd0;
+            reg_c0 <= 11'd0;
+        end else if (shift_en) begin
+            reg_c1 <= c2;
+            reg_c0 <= reg_c1;
+        end
+    end
+
+    // Gx = C2 - C0 = C2 + (~C0) + 1
+    wire [10:0] Gx = c2 + (~reg_c0) + 11'd1;
+
+    // =========================================================================
+    // 2. Gy Branch: 4-CSA Reduction Tree + CPA
+    // =========================================================================
+    // Gy = (P20 + 2*P21 + P22) - (P00 + 2*P01 + P02)
+    // Positive terms (Row 2): window[0][2], window[1][2], window[2][2]
+    wire [10:0] w_p20    = {3'b000, window[0][2]};
+    wire [10:0] w_p21_x2 = {2'b00,  window[1][2], 1'b0};
+    wire [10:0] w_p22_y  = {3'b000, window[2][2]};
+
+    // Inverted negative terms (Row 0): window[0][0], window[1][0], window[2][0]
+    wire [10:0] w_inv_p00    = ~{3'b000, window[0][0]};
+    wire [10:0] w_inv_p01_x2 = ~{2'b00,  window[1][0], 1'b0};
+    wire [10:0] w_inv_p02    = ~{3'b000, window[2][0]};
 
     logic [10:0] s_pos, c_pos;
     CSA #(.WIDTH(11)) u_csa_pos (
-        .a     (ordered_window[3]),
-        .b     (ordered_window[4]),
-        .c     (ordered_window[5]),
+        .a     (w_p20),
+        .b     (w_p21_x2),
+        .c     (w_p22_y),
         .cin   (1'b0),
         .sum   (s_pos),
         .carry (c_pos)
@@ -58,9 +92,9 @@ module core (
 
     logic [10:0] s_neg, c_neg;
     CSA #(.WIDTH(11)) u_csa_neg (
-        .a     (ordered_window[0]),
-        .b     (ordered_window[1]),
-        .c     (ordered_window[2]),
+        .a     (w_inv_p00),
+        .b     (w_inv_p01_x2),
+        .c     (w_inv_p02),
         .cin   (1'b1),
         .sum   (s_neg),
         .carry (c_neg)
@@ -86,50 +120,23 @@ module core (
         .carry (c_csa4)
     );
 
-    logic [10:0] adder_out;
-    logic [10:0] reg_Gx, reg_Gy;
+    wire [10:0] Gy = s_csa4 + c_csa4;
 
-    Register #(
-        .WIDTH (11),
-        .INIT  (11'b0)
-    ) u_reg_gx (
-        .clk       (clk),
-        .reset     (rst),
-        .enable    (gx_en),
-        .d         (adder_out),
-        .q         (reg_Gx)
-    );
+    // =========================================================================
+    // 3. Absolute Value & Final Summation
+    // =========================================================================
+    assign gx_sign = Gx[10];
+    assign gy_sign = Gy[10];
 
-    Register #(
-        .WIDTH (11),
-        .INIT  (11'b0)
-    ) u_reg_gy (
-        .clk       (clk),
-        .reset     (rst),
-        .enable    (gy_en),
-        .d         (adder_out),
-        .q         (reg_Gy)
-    );
+    wire [10:0] xor_Gx = Gx ^ {11{gx_sign}};
+    wire [10:0] xor_Gy = Gy ^ {11{gy_sign}};
 
-    logic [10:0] xm_out, ym_out;
-    assign xm_out = (xm_ctrl == 2'd0) ? s_csa4 :
-                    (xm_ctrl == 2'd1) ? ~reg_Gx :
-                    (xm_ctrl == 2'd2) ? 11'd0 :
-                    (xm_ctrl == 2'd3) ? reg_Gx : 11'd0;
+    // cin is OR of sign bits
+    wire cin_final = gx_sign | gy_sign;
 
-    assign ym_out = (ym_ctrl == 2'd0) ? c_csa4 :
-                    (ym_ctrl == 2'd1) ? 11'd0 :
-                    (ym_ctrl == 2'd2) ? ~reg_Gy :
-                    (ym_ctrl == 2'd3) ? reg_Gy : 11'd0;
+    wire [10:0] G_raw = xor_Gx + xor_Gy + {10'd0, cin_final};
 
-    wire adder_cin = (xm_ctrl == 2'd1) ? reg_Gx[10] :
-                     (ym_ctrl == 2'd2) ? reg_Gy[10] : 1'b0;
-
-    assign adder_out = xm_out + ym_out + {10'd0, adder_cin};
-    
-    assign gx_sign = adder_out[10];
-    assign gy_sign = adder_out[10];
-
-    assign G = (adder_out > 11'd255) ? 8'd255 : adder_out[7:0];
+    // Saturation clamping to [0, 255]
+    assign G = (G_raw > 11'd255) ? 8'd255 : G_raw[7:0];
 
 endmodule
