@@ -1,32 +1,33 @@
-`timescale 1ns/1ps
-
-// =============================================================================
-// ReorderBuffer for 2-Line Streaming Architecture
-// Reorders 2 BRAM line buffers and the live pixel stream into a 3-row column:
-//   - row_ref = 0: top = raw_col[0], mid = raw_col[1], bot = live_pixel
-//   - row_ref = 1: top = raw_col[1], mid = raw_col[0], bot = live_pixel
-// =============================================================================
-
-module ReorderBuffer #(
-    parameter WIDTH = 8,
-    parameter ROWS  = 2,
-    parameter YWIN  = 3
-)(
-    input  logic                     row_ref,
-    input  logic [WIDTH-1:0]         raw_col [ROWS-1:0],
-    input  logic [WIDTH-1:0]         live_pixel,
-    output logic [WIDTH-1:0]         ordered_col [YWIN-1:0]
+module ReorderBuffer #( parameter WIDTH = 8, ROWS  = 2, YWIN  = 3 ) (
+    input  logic [$clog2(ROWS)-1:0] row_ref,
+    input  logic [WIDTH-1:0] raw_col [ROWS-1:0],
+    input  logic [WIDTH-1:0] live_pixel,
+    output logic [WIDTH-1:0] ordered_col [YWIN-1:0]
 );
 
     always_comb begin
-        if (row_ref == 1'b0) begin
-            ordered_col[0] = raw_col[0];
-            ordered_col[1] = raw_col[1];
-        end else begin
-            ordered_col[0] = raw_col[1];
-            ordered_col[1] = raw_col[0];
+        
+        ROW_UNKNOWN: assert #0 (!$isunknown(row_ref))
+            else $warning("Reorder row index (row_ref) contains X or Z bits!");
+            
+        ROW_RANGE: assert #0 (int'(row_ref) < ROWS)
+            else $error("Reorder row index (row_ref) out of range!");
+
+        for (int unsigned y = 0; y < YWIN - 1; y++) begin
+            
+            int unsigned index;
+            int unsigned phys_row;
+
+            index    = int'(row_ref) + y;
+
+            phys_row = (index >= ROWS) ? (index - ROWS) : index;
+            
+            ordered_col[y] = raw_col[phys_row];
+        
         end
-        ordered_col[2] = live_pixel;
+
+        ordered_col[YWIN - 1] = live_pixel;
+        
     end
 
 endmodule

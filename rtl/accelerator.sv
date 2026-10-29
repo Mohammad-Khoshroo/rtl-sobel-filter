@@ -7,12 +7,6 @@
 `include "SlidingWindowBuffer.sv"
 `include "core.sv"
 
-// =============================================================================
-// Sobel Filter Accelerator Top Module (2-Line Streaming Architecture)
-// Throughput: 1.0 Pixel / Clock Cycle
-// Memory: 2 BRAM Line Buffers (33% memory saving)
-// =============================================================================
-
 module accelerator #(
     parameter WIDTH_SIZE  = 640,
     parameter HEIGHT_SIZE = 853,
@@ -30,9 +24,6 @@ module accelerator #(
     output logic [PIXEL_WIDTH-1:0] pixel_out
 );
 
-    // -------------------------------------------------------------------------
-    // Internal Signals (Fully Encapsulated)
-    // -------------------------------------------------------------------------
     logic                   linebuffer_wenable;
     logic                   window_shiften;
     logic                   row_pointer;
@@ -44,9 +35,6 @@ module accelerator #(
 
     assign pixel_out = core_G;
 
-    // -------------------------------------------------------------------------
-    // Submodule 1: FSM Streaming Controller
-    // -------------------------------------------------------------------------
     controller #(
         .WIDTH_SIZE  (WIDTH_SIZE),
         .HEIGHT_SIZE (HEIGHT_SIZE)
@@ -65,9 +53,6 @@ module accelerator #(
         .raddress           (raddress)
     );
 
-    // -------------------------------------------------------------------------
-    // Submodule 2: Sliding Window Buffer (2-Line Architecture)
-    // -------------------------------------------------------------------------
     SlidingWindowBuffer #(
         .WIDTH (PIXEL_WIDTH),
         .ROWS  (2),
@@ -87,9 +72,6 @@ module accelerator #(
         .rdata    (window)
     );
 
-    // -------------------------------------------------------------------------
-    // Submodule 3: Sobel Core Datapath
-    // -------------------------------------------------------------------------
     core u_core (
         .clk      (clk),
         .rst      (rst),
