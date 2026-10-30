@@ -48,3 +48,6 @@ obj_dir/
 .DS_Store
 Thumbs.db
 *~
+
+
+*.typ
