@@ -7,14 +7,6 @@
 `include "SlidingWindowBuffer_baseline.sv"
 `include "core_baseline.sv"
 
-// =============================================================================
-// Sobel Filter Accelerator Top Module
-// Integrates:
-//   - Controller: FSM managing image streaming, buffer row/col indexing, and computation steps
-//   - SlidingWindowBuffer: Line buffer + circular reordering + 3x3 window shift registers
-//   - Core: Wallace tree CSA-based datapath for Sobel Gx, Gy, and G=|Gx|+|Gy| computation
-// =============================================================================
-
 module accelerator_baseline #(
     parameter WIDTH_SIZE  = 640,
     parameter HEIGHT_SIZE = 853,
@@ -35,9 +27,6 @@ module accelerator_baseline #(
     output logic [PIXEL_WIDTH-1:0] pixel_out
 );
 
-    // -------------------------------------------------------------------------
-    // Interconnect Signals
-    // -------------------------------------------------------------------------
     logic                   window_shiften;
     logic [1:0]             row_pointer;
     logic [9:0]             waddress;
@@ -56,9 +45,6 @@ module accelerator_baseline #(
 
     assign pixel_out = core_G;
 
-    // -------------------------------------------------------------------------
-    // Submodule 1: FSM Controller
-    // -------------------------------------------------------------------------
     controller_baseline u_controller (
         .clk                (clk),
         .rst                (rst),
@@ -83,9 +69,6 @@ module accelerator_baseline #(
         .raddress           (raddress)
     );
 
-    // -------------------------------------------------------------------------
-    // Submodule 2: Sliding Window Buffer
-    // -------------------------------------------------------------------------
     SlidingWindowBuffer_baseline #(
         .WIDTH (PIXEL_WIDTH),
         .ROWS  (3),
@@ -105,9 +88,6 @@ module accelerator_baseline #(
         .rdata    (window)
     );
 
-    // -------------------------------------------------------------------------
-    // Submodule 3: Sobel Core Datapath
-    // -------------------------------------------------------------------------
     core_baseline u_core (
         .clk     (clk),
         .rst     (rst),
