@@ -4,21 +4,76 @@
 // 1. Navigate to the project root directory:
 //    cd /mnt/d/UT.CE/FPGA/CA/CA01
 //
-// 2. Compile optimized testbench with Verilator:
+// -----------------------------------------------------------------------------
+// [A] Golden (Clean) Optimized Architecture Simulation:
+// -----------------------------------------------------------------------------
 //    $ verilator --binary --trace --assert -Wno-fatal \
-//              -Irtl -Irtl/optimized -Irtl/include \
-//              -Isva/optimized \
-//              --top-module tb_accelerator_optimized \
-//              tb/optimized/tb_accelerator_optimized.sv \
-//              rtl/optimized/accelerator_optimized.sv \
-//              rtl/include/Register.sv \
-//              rtl/include/CSA.sv
+//                -Irtl -Irtl/optimized -Irtl/include \
+//                -Isva/optimized \
+//                --top-module tb_accelerator_optimized \
+//                tb/optimized/tb_accelerator_optimized.sv \
+//                rtl/optimized/accelerator_optimized.sv \
+//                rtl/include/Register.sv \
+//                rtl/include/CSA.sv
+//    $ ./obj_dir/Vtb_accelerator_optimized
 //
-// 3. Execute the compiled simulation binary:
-//    ./obj_dir/Vtb_accelerator_optimized
+// -----------------------------------------------------------------------------
+// [B] Bugged Designs Compilation (To Trigger & Verify SVA Assertions):
+// -----------------------------------------------------------------------------
+//  * Bug 1 (Reset Violation - pipe_v2 asserted during reset):
+//    $ verilator --binary --trace --assert -Wno-fatal \
+//                -Irtl/bugged_optimized/bug1_reset \
+//                -Irtl -Irtl/optimized -Irtl/include -Isva/optimized \
+//                --top-module tb_accelerator_optimized \
+//                tb/optimized/tb_accelerator_optimized.sv \
+//                rtl/optimized/accelerator_optimized.sv \
+//                rtl/include/Register.sv rtl/include/CSA.sv
+//    $ ./obj_dir/Vtb_accelerator_optimized
 //
-// 4. Verify output image:
-//    python3 scripts/verify_all.py
+//  * Bug 2 (Datapath Latency Mismatch - row >= 1 instead of row >= 2):
+//    $ verilator --binary --trace --assert -Wno-fatal \
+//                -Irtl/bugged_optimized/bug2_latency \
+//                -Irtl -Irtl/optimized -Irtl/include -Isva/optimized \
+//                --top-module tb_accelerator_optimized \
+//                tb/optimized/tb_accelerator_optimized.sv \
+//                rtl/optimized/accelerator_optimized.sv \
+//                rtl/include/Register.sv rtl/include/CSA.sv
+//    $ ./obj_dir/Vtb_accelerator_optimized
+//
+//  * Bug 3 (Control Signals Violation - ready stays asserted in STREAM):
+//    $ verilator --binary --trace --assert -Wno-fatal \
+//                -Irtl/bugged_optimized/bug3_control \
+//                -Irtl -Irtl/optimized -Irtl/include -Isva/optimized \
+//                --top-module tb_accelerator_optimized \
+//                tb/optimized/tb_accelerator_optimized.sv \
+//                rtl/optimized/accelerator_optimized.sv \
+//                rtl/include/Register.sv rtl/include/CSA.sv
+//    $ ./obj_dir/Vtb_accelerator_optimized
+//
+//  * Bug 4 (Output Validity Violation - valid_pixel asserted in IDLE):
+//    $ verilator --binary --trace --assert -Wno-fatal \
+//                -Irtl/bugged_optimized/bug4_validity \
+//                -Irtl -Irtl/optimized -Irtl/include -Isva/optimized \
+//                --top-module tb_accelerator_optimized \
+//                tb/optimized/tb_accelerator_optimized.sv \
+//                rtl/optimized/accelerator_optimized.sv \
+//                rtl/include/Register.sv rtl/include/CSA.sv
+//    $ ./obj_dir/Vtb_accelerator_optimized
+//
+//  * Bug 5 (Output Range / Missing Saturation - G_sat = G[7:0]):
+//    $ verilator --binary --trace --assert -Wno-fatal \
+//                -Irtl/bugged_optimized/bug5_output_range \
+//                -Irtl -Irtl/optimized -Irtl/include -Isva/optimized \
+//                --top-module tb_accelerator_optimized \
+//                tb/optimized/tb_accelerator_optimized.sv \
+//                rtl/optimized/accelerator_optimized.sv \
+//                rtl/include/Register.sv rtl/include/CSA.sv
+//    $ ./obj_dir/Vtb_accelerator_optimized
+//
+// -----------------------------------------------------------------------------
+// [C] Run All Tests Automatically:
+// -----------------------------------------------------------------------------
+//    $ ./scripts/run_sva_tests.sh
 // =============================================================================
 
 `timescale 1ns/1ps
@@ -161,7 +216,8 @@ module tb_accelerator_optimized;
         .rst      (rst),
         .shift_en (shift_en),
         .window   (window),
-        .G_sat    (G_sat)
+        .G_sat    (G_sat),
+        .G        (G)
     );
 
     bind accelerator_optimized accelerator_optimized_sva #(

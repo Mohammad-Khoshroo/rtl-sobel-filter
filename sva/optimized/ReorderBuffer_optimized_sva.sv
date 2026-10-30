@@ -1,10 +1,6 @@
 `ifndef REORDER_BUFFER_OPTIMIZED_SVA_SV
 `define REORDER_BUFFER_OPTIMIZED_SVA_SV
 
-// =============================================================================
-// SVA Checker for ReorderBuffer_optimized
-// =============================================================================
-
 module ReorderBuffer_optimized_sva #(
     parameter WIDTH = 8,
     parameter ROWS  = 2,
@@ -18,13 +14,13 @@ module ReorderBuffer_optimized_sva #(
 
     always_comb begin
         ROW_UNKNOWN: assert #0 (!$isunknown(row_ref))
-            else $warning("[SVA ReorderBuffer_optimized] row_ref contains X or Z bits!");
+            else $warning("[SVA] row_ref contains X or Z bits!");
 
         ROW_RANGE: assert #0 (int'(row_ref) < ROWS)
-            else $error("[SVA ReorderBuffer_optimized] row_ref out of range! row_ref=%0d", int'(row_ref));
+            else $error("[SVA] row_ref out of range! row_ref=%0d", int'(row_ref));
 
         LIVE_PIXEL_MAP: assert #0 (ordered_col[YWIN-1] == live_pixel)
-            else $error("[SVA ReorderBuffer_optimized] ordered_col[%0d] does not match live_pixel!", YWIN-1);
+            else $error("[SVA] ordered_col[%0d] does not match live_pixel!", YWIN-1);
     end
 
 endmodule

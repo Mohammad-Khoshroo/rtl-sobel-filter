@@ -1,10 +1,6 @@
 `ifndef SLIDING_WINDOW_BUFFER_OPTIMIZED_SVA_SV
 `define SLIDING_WINDOW_BUFFER_OPTIMIZED_SVA_SV
 
-// =============================================================================
-// SVA Checker for SlidingWindowBuffer_optimized
-// =============================================================================
-
 module SlidingWindowBuffer_optimized_sva #(
     parameter WIDTH = 8,
     parameter ROWS  = 2,
@@ -27,21 +23,21 @@ module SlidingWindowBuffer_optimized_sva #(
     always @(posedge clk) begin
         if (!rst) begin
             WEN_UNKNOWN: assert (!$isunknown(wenable))
-                else $error("[SVA SlidingWindowBuffer_optimized] wenable is X or Z!");
+                else $error("[SVA] wenable is X or Z!");
 
             REN_UNKNOWN: assert (!$isunknown(renable))
-                else $error("[SVA SlidingWindowBuffer_optimized] renable is X or Z!");
+                else $error("[SVA] renable is X or Z!");
 
             if (wenable) begin
                 WADDR_RANGE: assert (int'(waddress) < SIZE)
-                    else $error("[SVA SlidingWindowBuffer_optimized] waddress out of range: %0d", int'(waddress));
+                    else $error("[SVA] waddress out of range: %0d", int'(waddress));
                 WDATA_UNKNOWN: assert (!$isunknown(wdata))
-                    else $warning("[SVA SlidingWindowBuffer_optimized] wdata has X or Z bits!");
+                    else $warning("[SVA] wdata has X or Z bits!");
             end
 
             if (renable) begin
                 RADDR_RANGE: assert (int'(raddress) < SIZE)
-                    else $error("[SVA SlidingWindowBuffer_optimized] raddress out of range: %0d", int'(raddress));
+                    else $error("[SVA] raddress out of range: %0d", int'(raddress));
             end
         end
     end

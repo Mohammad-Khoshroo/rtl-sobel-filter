@@ -1,10 +1,6 @@
 `ifndef WINDOW_BUFFER_OPTIMIZED_SVA_SV
 `define WINDOW_BUFFER_OPTIMIZED_SVA_SV
 
-// =============================================================================
-// SVA Checker for WindowBuffer_optimized
-// =============================================================================
-
 module WindowBuffer_optimized_sva #(
     parameter WIDTH = 8,
     parameter XWIN  = 3,
@@ -20,12 +16,12 @@ module WindowBuffer_optimized_sva #(
     always @(posedge clk) begin
         if (!rst) begin
             SHIFT_UNKNOWN: assert #0 (!$isunknown(shift_en))
-                else $error("[SVA WindowBuffer_optimized] shift_en contains X or Z!");
+                else $error("[SVA] shift_en contains X or Z!");
 
             if (shift_en) begin
                 for (int unsigned y = 0; y < YWIN; y++) begin
                     COL_UNKNOWN: assert #0 (!$isunknown(col_in[y]))
-                        else $warning("[SVA WindowBuffer_optimized] col_in[%0d] contains X or Z bits!", y);
+                        else $warning("[SVA] col_in[%0d] contains X or Z bits!", y);
                 end
             end
         end
