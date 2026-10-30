@@ -10,17 +10,17 @@
 # for extract the Fmax:
 ##############################
 
-# set clk_period [get_property PERIOD [get_clocks -of_objects [get_ports clk]]]
-# set wns [get_property SLACK [get_timing_paths -max_paths 1 -setup]]
-# set min_period [expr {$clk_period - $wns}]
-# set fmax [expr {1000.0 / $min_period}]
+set clk_period [get_property PERIOD [get_clocks -of_objects [get_ports clk]]]
+set wns [get_property SLACK [get_timing_paths -max_paths 1 -setup]]
+set min_period [expr {$clk_period - $wns}]
+set fmax [expr {1000.0 / $min_period}]
 
-# puts "==========================================="
-# puts "Target Clock : $clk_period ns ([expr {1000.0/$clk_period}] MHz)"
-# puts "WNS (Slack)  : $wns ns"
-# puts "Min Period   : $min_period ns"
-# puts "Max Freq     : [format "%.2f" $fmax] MHz"
-# puts "==========================================="
+puts "==========================================="
+puts "Target Clock : $clk_period ns ([expr {1000.0/$clk_period}] MHz)"
+puts "WNS (Slack)  : $wns ns"
+puts "Min Period   : $min_period ns"
+puts "Max Freq     : [format "%.2f" $fmax] MHz"
+puts "==========================================="
 
 
 ##############################
