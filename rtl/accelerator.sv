@@ -73,11 +73,11 @@ module accelerator #(
     );
 
     core u_core (
-        .clk      (clk),
-        .rst      (rst),
-        .shift_en (window_shiften),
-        .window   (window),
-        .G_sat    (core_G)
+        .clk       (clk),
+        .rst       (rst),
+        .shift_en  (window_shiften),
+        .window    (window),
+        .G_sat_reg (core_G)
     );
 
 endmodule

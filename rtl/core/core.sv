@@ -8,10 +8,6 @@
 // );
 // =============================================================================
 
-`ifndef REGISTER_MODULE
-`include "Register.sv"
-`endif
-
 module core (
     input  logic       clk,
     input  logic       rst,

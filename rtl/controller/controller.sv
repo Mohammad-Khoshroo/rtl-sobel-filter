@@ -35,17 +35,23 @@ module controller #(
     assign linebuffer_wenable = (state == STREAM);
     assign window_shiften     = (state == STREAM) || (state == FLUSH);
 
-    logic pipe_v1, pipe_v2;
+    logic pipe_v1, pipe_v2, pipe_v3, pipe_v4, pipe_v5;
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             pipe_v1 <= 1'b0;
             pipe_v2 <= 1'b0;
+            pipe_v3 <= 1'b0;
+            pipe_v4 <= 1'b0;
+            pipe_v5 <= 1'b0;
         end else begin
             pipe_v1 <= (state == STREAM) && (row >= 10'd2) && (col >= 10'd2) && (col < WIDTH_SIZE);
             pipe_v2 <= pipe_v1;
+            pipe_v3 <= pipe_v2;
+            pipe_v4 <= pipe_v3;
+            pipe_v5 <= pipe_v4;
         end
     end
-    assign valid_pixel = pipe_v2;
+    assign valid_pixel = pipe_v5;
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -102,7 +108,7 @@ module controller #(
             end
 
             FLUSH: begin
-                if (flush_cnt == 3'd3) begin
+                if (flush_cnt == 3'd6) begin
                     next_state = DONE;
                 end
             end
