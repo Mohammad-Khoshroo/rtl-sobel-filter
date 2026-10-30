@@ -54,7 +54,7 @@ def compile_verilator():
     print("==================================================================")
     compile_cmd = (
         "verilator --binary --assert -Wno-fatal "
-        "-Irtl -Irtl/buffer -Irtl/controller -Irtl/core -Irtl/MIA -Irtl/Register -Irtl/include "
+        "-Irtl -Irtl/buffer -Irtl/controller -Irtl/core -Irtl/include "
         "--top-module tb_accelerator "
         "rtl/accelerator.sv tb/tb_accelerator.sv"
     )

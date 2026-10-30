@@ -1,9 +1,9 @@
 `ifndef CSA_SV
-`include "CSA.sv"
+`include "../include/CSA.sv"
 `endif
 
 `ifndef REGISTER_MODULE
-`include "Register.sv"
+`include "../include/Register.sv"
 `endif
 
 // =============================================================================
