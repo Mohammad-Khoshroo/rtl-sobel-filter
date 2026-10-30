@@ -8,6 +8,10 @@
 // );
 // =============================================================================
 
+`ifndef REGISTER_MODULE
+`include "Register.sv"
+`endif
+
 module core (
     input  logic       clk,
     input  logic       rst,
@@ -38,15 +42,24 @@ module core (
     wire [10:0] c2 = s_c2 + c_c2;
 
     logic [10:0] reg_c1, reg_c0;
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
-            reg_c1 <= 11'd0;
-            reg_c0 <= 11'd0;
-        end else if (shift_en) begin
-            reg_c1 <= c2;
-            reg_c0 <= reg_c1;
-        end
-    end
+    Register #(
+        .WIDTH (11)
+    ) u_reg_c1 (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (c2),
+        .q      (reg_c1)
+    );
+    Register #(
+        .WIDTH (11)
+    ) u_reg_c0 (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (reg_c1),
+        .q      (reg_c0)
+    );
 
     wire [10:0] Gx = c2 + (~reg_c0) + 1'b1;
 
@@ -103,19 +116,45 @@ module core (
 
     wire [10:0] Gy = s_csa4 + c_csa4;
 
-    wire gy_sign, gx_sign;
+    logic [10:0] reg_Gx, reg_Gy;
+    Register #(
+        .WIDTH (11)
+    ) u_reg_gx (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (Gx),
+        .q      (reg_Gx)
+    );
 
-    assign gx_sign = Gx[10];
-    assign gy_sign = Gy[10];
+    Register #(
+        .WIDTH (11)
+    ) u_reg_gy (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (Gy),
+        .q      (reg_Gy)
+    );
 
-    wire [10:0] xor_Gx = Gx ^ {11{gx_sign}};
-    wire [10:0] xor_Gy = Gy ^ {11{gy_sign}};
+    wire [10:0] xor_Gx = reg_Gx ^ {11{reg_Gx[10]}};
+    wire [10:0] xor_Gy = reg_Gy ^ {11{reg_Gy[10]}};
 
-    wire cin = gx_sign | gy_sign;
+    wire cin = reg_Gx[10] | reg_Gy[10];
 
     // i have a -1 at most error 
     wire [10:0] G = xor_Gx + xor_Gy + cin;
 
-    assign G_sat = |(G[10:8]) ? 8'd255 : G[7:0];
+    wire [7:0] g_sat_comb = |(G[10:8]) ? 8'd255 : G[7:0];
+
+    Register #(
+        .WIDTH (8)
+    ) u_reg_gsat (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (g_sat_comb),
+        .q      (G_sat)
+    );
 
 endmodule
