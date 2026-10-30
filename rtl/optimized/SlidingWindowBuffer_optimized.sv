@@ -1,5 +1,3 @@
-`timescale 1ns/1ps
-
 `include "LineBuffer_optimized.sv"
 `include "ReorderBuffer_optimized.sv"
 `include "WindowBuffer_optimized.sv"
