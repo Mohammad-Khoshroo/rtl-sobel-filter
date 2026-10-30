@@ -4,7 +4,7 @@
 //     .rst      (rst),
 //     .shift_en (shift_en),
 //     .window   (window),
-//     .G_sat    (G_sat)
+//     .G_sat_reg    (G_sat_reg)
 // );
 // =============================================================================
 
@@ -18,7 +18,7 @@ module core (
     input  logic       shift_en,
     input  logic [7:0] window [2:0][2:0],
 
-    output logic [7:0] G_sat
+    output logic [7:0] G_sat_reg
 );
 
     // Gx computation
@@ -41,14 +41,24 @@ module core (
 
     wire [10:0] c2 = s_c2 + c_c2;
 
-    logic [10:0] reg_c1, reg_c0;
+    // stage 2 pipeline
+    logic [10:0] reg_c2, reg_c1, reg_c0;
+    Register #(
+        .WIDTH (11)
+    ) u_reg_c2 (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (c2),
+        .q      (reg_c2)
+    );
     Register #(
         .WIDTH (11)
     ) u_reg_c1 (
         .clk    (clk),
         .reset  (rst),
         .enable (shift_en),
-        .d      (c2),
+        .d      (reg_c2),
         .q      (reg_c1)
     );
     Register #(
@@ -60,8 +70,6 @@ module core (
         .d      (reg_c1),
         .q      (reg_c0)
     );
-
-    wire [10:0] Gx = c2 + (~reg_c0) + 1'b1;
 
     // Gy computation
     // 
@@ -114,8 +122,31 @@ module core (
         .carry (c_csa4)
     );
 
-    wire [10:0] Gy = s_csa4 + c_csa4;
+    // stage 2 pipeline
+    logic [10:0] reg_s_gy, reg_c_gy;
+    Register #(
+        .WIDTH (11)
+    ) u_reg_s_gy (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (s_csa4),
+        .q      (reg_s_gy)
+    );
+    Register #(
+        .WIDTH (11)
+    ) u_reg_c_gy (
+        .clk    (clk),
+        .reset  (rst),
+        .enable (shift_en),
+        .d      (c_csa4),
+        .q      (reg_c_gy)
+    );
 
+    wire [10:0] Gx = reg_c2 + (~reg_c0) + 1'b1;
+    wire [10:0] Gy = reg_s_gy + reg_c_gy;
+
+    // stage 3 pipeline
     logic [10:0] reg_Gx, reg_Gy;
     Register #(
         .WIDTH (11)
@@ -126,7 +157,6 @@ module core (
         .d      (Gx),
         .q      (reg_Gx)
     );
-
     Register #(
         .WIDTH (11)
     ) u_reg_gy (
@@ -145,16 +175,17 @@ module core (
     // i have a -1 at most error 
     wire [10:0] G = xor_Gx + xor_Gy + cin;
 
-    wire [7:0] g_sat_comb = |(G[10:8]) ? 8'd255 : G[7:0];
+    wire [7:0] G_sat = |(G[10:8]) ? 8'd255 : G[7:0];
 
+    // final stage / output register
     Register #(
         .WIDTH (8)
     ) u_reg_gsat (
         .clk    (clk),
         .reset  (rst),
         .enable (shift_en),
-        .d      (g_sat_comb),
-        .q      (G_sat)
+        .d      (G_sat),
+        .q      (G_sat_reg)
     );
 
 endmodule
