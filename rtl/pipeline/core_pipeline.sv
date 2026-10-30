@@ -1,3 +1,11 @@
+`ifndef CSA_SV
+`include "../include/CSA.sv"
+`endif
+
+`ifndef REGISTER_MODULE
+`include "../include/Register.sv"
+`endif
+
 // =============================================================================
 // core_pipeline #(
 // ) module_name (
