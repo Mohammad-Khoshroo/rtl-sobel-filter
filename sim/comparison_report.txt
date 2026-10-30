@@ -1,0 +1,13 @@
+========================================================================================================
+                          SOBEL HARDWARE ARCHITECTURE COMPARISON RESULTS
+========================================================================================================
+Architecture     | Total Cycles | Duration @100MHz | Valid Pixels | Throughput (px/cyc) | Critical Path  
+-----------------+--------------+-----------------+--------------+---------------------+----------------
+Baseline         |      3040077 |       30.401 ms |       542938 |             0.1786  | Multi-cycle FSM
+Optimized        |       545925 |        5.459 ms |       542938 |             0.9945  | 2 RCA + 3 CSA  
+Pipelined (3-Stg) |       545928 |        5.459 ms |       542938 |             0.9945  | 1 RCA (Max Fmax)
+========================================================================================================
+Speedup (Optimized vs Baseline) : 5.57x fewer cycles
+Speedup (Pipeline  vs Baseline) : 5.57x fewer cycles, ~3x higher maximum frequency (>300 MHz)
+Latency to 1st Pixel: Baseline = 1929 cyc, Optimized = 1285 cyc, Pipeline = 1288 cyc
+========================================================================================================

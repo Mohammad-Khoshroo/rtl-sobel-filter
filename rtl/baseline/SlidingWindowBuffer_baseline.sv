@@ -1,9 +1,9 @@
-`include "LineBuffer.sv"
-`include "ReorderBuffer.sv"
-`include "WindowBuffer.sv"
+`include "LineBuffer_baseline.sv"
+`include "ReorderBuffer_baseline.sv"
+`include "WindowBuffer_baseline.sv"
 
 // =============================================================================
-// SlidingWindowBuffer #(
+// SlidingWindowBuffer_baseline #(
 //     .WIDTH    (8),
 //     .ROWS     (3),
 //     .SIZE     (640),
@@ -23,7 +23,7 @@
 // );
 // =============================================================================
 
-module SlidingWindowBuffer #( parameter WIDTH = 8, ROWS  = 3, SIZE  = 640, XWIN  = 3, YWIN  = 3 ) (
+module SlidingWindowBuffer_baseline #( parameter WIDTH = 8, ROWS  = 3, SIZE  = 640, XWIN  = 3, YWIN  = 3 ) (
     input  clk, rst,
 
     input  wenable,
@@ -41,7 +41,7 @@ module SlidingWindowBuffer #( parameter WIDTH = 8, ROWS  = 3, SIZE  = 640, XWIN 
     logic [WIDTH-1:0] raw_col     [ROWS-1:0];
     logic [WIDTH-1:0] ordered_col [YWIN-1:0];
 
-    LineBuffer #(WIDTH, ROWS, SIZE) line_buffer (
+    LineBuffer_baseline #(WIDTH, ROWS, SIZE) line_buffer (
         .clk      (clk),
         .rst      (rst),
         .wdata    (wdata),
@@ -52,13 +52,13 @@ module SlidingWindowBuffer #( parameter WIDTH = 8, ROWS  = 3, SIZE  = 640, XWIN 
         .rdata    (raw_col)
     );
 
-    ReorderBuffer #(WIDTH, ROWS, YWIN) reorder_buffer (
+    ReorderBuffer_baseline #(WIDTH, ROWS, YWIN) reorder_buffer (
         .row_ref     (rrow),
         .raw_col     (raw_col),
         .ordered_col (ordered_col)
     );
 
-    WindowBuffer #(WIDTH, XWIN, YWIN) window_buffer (
+    WindowBuffer_baseline #(WIDTH, XWIN, YWIN) window_buffer (
         .clk        (clk),
         .rst        (rst),
         .shift_en   (renable),

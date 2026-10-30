@@ -1,5 +1,5 @@
 // =============================================================================
-// LineBuffer #(
+// LineBuffer_optimized #(
 //     .WIDTH    (8),
 //     .ROWS     (3),
 //     .SIZE     (640)
@@ -15,7 +15,7 @@
 // );
 // =============================================================================
 
-module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
+module LineBuffer_optimized #(parameter WIDTH = 8, ROWS = 2, SIZE = 640) (
     input clk, rst, 
 
     input [WIDTH-1:0] wdata,
@@ -43,7 +43,7 @@ module LineBuffer #(parameter WIDTH = 8, ROWS = 3, SIZE = 640) (
 
                 WRITE_UNKNOWN: assert (!$isunknown(wdata) && !$isunknown(wrow) && !$isunknown(waddress))
                     else $warning("Input contains X or Z bits!");
-                WRITE_RANGE: assert ((wrow < ROWS) && (waddress < SIZE))
+                WRITE_RANGE: assert ((int'(wrow) < ROWS) && (int'(waddress) < SIZE))
                     else $error("Address out of range!");
                 
                 mem[wrow][waddress] <= wdata;

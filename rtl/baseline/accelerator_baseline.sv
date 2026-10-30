@@ -1,11 +1,11 @@
 `timescale 1ns/1ps
 
-`ifndef ACCELERATOR_SV
-`define ACCELERATOR_SV
+`ifndef ACCELERATOR_BASELINE_SV
+`define ACCELERATOR_BASELINE_SV
 
-`include "controller.sv"
-`include "SlidingWindowBuffer.sv"
-`include "core.sv"
+`include "controller_baseline.sv"
+`include "SlidingWindowBuffer_baseline.sv"
+`include "core_baseline.sv"
 
 // =============================================================================
 // Sobel Filter Accelerator Top Module
@@ -15,7 +15,7 @@
 //   - Core: Wallace tree CSA-based datapath for Sobel Gx, Gy, and G=|Gx|+|Gy| computation
 // =============================================================================
 
-module accelerator #(
+module accelerator_baseline #(
     parameter WIDTH_SIZE  = 640,
     parameter HEIGHT_SIZE = 853,
     parameter PIXEL_WIDTH = 8
@@ -59,7 +59,7 @@ module accelerator #(
     // -------------------------------------------------------------------------
     // Submodule 1: FSM Controller
     // -------------------------------------------------------------------------
-    controller u_controller (
+    controller_baseline u_controller (
         .clk                (clk),
         .rst                (rst),
         .start              (start),
@@ -86,7 +86,7 @@ module accelerator #(
     // -------------------------------------------------------------------------
     // Submodule 2: Sliding Window Buffer
     // -------------------------------------------------------------------------
-    SlidingWindowBuffer #(
+    SlidingWindowBuffer_baseline #(
         .WIDTH (PIXEL_WIDTH),
         .ROWS  (3),
         .SIZE  (WIDTH_SIZE),
@@ -108,7 +108,7 @@ module accelerator #(
     // -------------------------------------------------------------------------
     // Submodule 3: Sobel Core Datapath
     // -------------------------------------------------------------------------
-    core u_core (
+    core_baseline u_core (
         .clk     (clk),
         .rst     (rst),
         .window  (window),
@@ -124,4 +124,4 @@ module accelerator #(
 
 endmodule
 
-`endif // ACCELERATOR_SV
+`endif // ACCELERATOR_BASELINE_SV

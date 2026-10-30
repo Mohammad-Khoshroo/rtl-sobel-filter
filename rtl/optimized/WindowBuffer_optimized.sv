@@ -1,5 +1,5 @@
 // =============================================================================
-// WindowBuffer #(
+// WindowBuffer_optimized #(
 //     .WIDTH      (8),
 //     .XWIN       (3),
 //     .YWIN       (3)
@@ -12,7 +12,7 @@
 // );
 // =============================================================================
 
-module WindowBuffer #( parameter WIDTH = 8, XWIN  = 3, YWIN  = 3 ) (
+module WindowBuffer_optimized #( parameter WIDTH = 8, XWIN  = 3, YWIN  = 3 ) (
     input  logic clk, rst,
     input  logic shift_en,
 

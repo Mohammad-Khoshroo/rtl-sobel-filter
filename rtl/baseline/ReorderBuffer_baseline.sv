@@ -1,5 +1,5 @@
 // =============================================================================
-// ReorderBuffer #(
+// ReorderBuffer_baseline #(
 //     .WIDTH       (8),
 //     .ROWS        (3),
 //     .YWIN        (3)
@@ -10,7 +10,7 @@
 // );
 // =============================================================================
 
-module ReorderBuffer #( parameter WIDTH = 8, ROWS  = 3, YWIN  = 3 ) (
+module ReorderBuffer_baseline #( parameter WIDTH = 8, ROWS  = 3, YWIN  = 3 ) (
     input  logic [$clog2(ROWS)-1:0] row_ref,
     input  logic [WIDTH-1:0] raw_col [ROWS-1:0],
     output logic [WIDTH-1:0] ordered_col [YWIN-1:0]

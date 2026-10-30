@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module controller (
+module controller_baseline (
     input clk,
     input rst,
 
