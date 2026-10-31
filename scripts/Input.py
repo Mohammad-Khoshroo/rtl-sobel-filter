@@ -1,10 +1,11 @@
-from PIL import Image
+import cv2
 
-img = Image.open('input.png').convert('L')
-img = img.resize((640,853))
+# Load image using OpenCV Grayscale to ensure bit-level consistency with Checker.py
+img = cv2.imread('input.png', cv2.IMREAD_GRAYSCALE)
+img = cv2.resize(img, (640, 853))
 
-with open('image_in.hex','w') as f:
-    for pixel in list(img.getdata()):
+with open('image_in.hex', 'w') as f:
+    for pixel in img.flatten():
         f.write(f"{pixel:02X}\n")
 
 print("image_in.hex generated successfully!")
