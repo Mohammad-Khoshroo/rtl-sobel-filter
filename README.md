@@ -8,7 +8,6 @@ A high-throughput, resource-efficient hardware accelerator for 2D **Sobel Edge D
 
 The accelerator processes standard $640 \times 853$ 8-bit grayscale video frames in real time with high edge fidelity:
 
-
 | Input Image (640 &times; 853) | Hardware Sobel Output (&#124;G<sub>x</sub>&#124; + &#124;G<sub>y</sub>&#124;) |
 | :---: | :---: |
 | <img src="report/samples/input1_orig.png" width="380" alt="Input Grayscale Image" /> | <img src="report/samples/input1_sobel.png" width="380" alt="Hardware Sobel Output" /> |
@@ -97,7 +96,9 @@ Hardware outputs were benchmarked against OpenCV double-precision reference acro
 │   ├── Input.py             # Converts input.png -> image_in.hex (OpenCV-aligned)
 │   ├── Checker.py           # Validates image_out.hex against OpenCV ground truth
 │   └── run_sva_tests.sh     # Automates QuestaSim/Verilator SVA test suite
-├── report/                  # Full Persian academic report (VRDocs Markdown & Typst)
+├── report/                  # Academic reports (VRDocs Typst & Markdown)
+│   ├── report.md            # Persian academic report (گزارش فارسی)
+│   └── report-en.md         # English academic report
 └── README.md                # Project documentation
 ```
 
